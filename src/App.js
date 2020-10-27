@@ -1,37 +1,48 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, forwardRef} from 'react';
 import './App.css';
 import { Button, FormHelperText, InputLabel, Input } from '@material-ui/core';
-import { FormControl } from '@material-ui/core';
+import { FormControl, IconButton } from '@material-ui/core';
+import  SendIcon from '@material-ui/icons/Send';
 import Message from "./Message"
 import {db,auth} from "./firebase.js"
 import Header from './Header';
+import firebase from 'firebase'
+import FlipMove from 'react-flip-move';
+
 
 function App() {
 const [input, setInput] = useState('');
 const[messages,setMessages] = useState([{
-  name:'Zach',
-  text: 'Whats up its Zach',
+  username:'Guest',
+  message: 'Please enter a message',
 }]);
 const[username, setUsername] = useState('');
 
-// useEffect (()=>{
-  
-//   setUsername (prompt('Please enter name:'))
-// },[])
-
-// useEffect(()=>{
-
-// },[messages])
+useEffect(()=> {
+  //run once when the app loads
+  db.collection('messages')
+  .orderBy('timestamp', 'desc')
+  .onSnapshot(snapshot => {
+    setMessages(snapshot.docs.map(doc=> ({id: doc.id, message: doc.data()})))
+  })
+},[])
 
 const sendMessage = (event) => {
   //DB Logic
   event.preventDefault();
   if(input === "CLR"){
-    setMessages([{}]);
+    setMessages([{
+      username:'Guest',
+      message: 'Please enter a message',
+    }]);
+    //CLEAR DATABASE
   }else {
-    setMessages([...messages,{name: username,
-      text: input,
-      }]);
+    db.collection('messages').add({
+      message: input,
+      username: username,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    
   }
   
   setInput('');
@@ -50,20 +61,31 @@ const handleUsername = (user) => {
       <p className="app__description">Enter "CLR" to clear the chat</p>
         
       <div className="app__messages">
-        {messages.map((message)=>(
-          <Message username={username} message={message} />
-        ))}
-      </div>
-      
-
-      <FormControl className="app__form">
-        <div className="app__formInput">
-          <InputLabel>Enter a message...</InputLabel>
-          <Input  type="text" value={input} onChange={event => setInput(event.target.value)} className="app__input"/>   
-        </div>
+        <FlipMove>
+          {messages.map(({message, id})=>(
+            <Message key={id} username={username} message={message} />
+           ))}
+        </FlipMove>
         
-        <Button disabled={!input} variant='contained' color='primary' type="submit" onClick={sendMessage} className="app__submit">Send Message</Button>
+      </div>
+
+      
+      
+    <form onSubmit={sendMessage} className="app__form">
+    <FormControl className="app__formControl">
+        
+
+          <Input className="app__input" type="text" placeholder="Enter a message..." value={input} onChange={event => setInput(event.target.value)} className="app__input"/>   
+
+
+        <IconButton
+          disabled={!input} variant='contained' color='primary' type="submit" onClick={sendMessage} className="app__submit">
+            <SendIcon />
+        </IconButton>
+
       </FormControl>
+    </form>
+      
     </div>
   );
 }
