@@ -164,22 +164,28 @@ function Header({usernameHandler}) {
                 <img src="https://facebookbrand.com/wp-content/uploads/2018/09/Header-e1538151782912.png?w=399&h=399" alt="FB"/>
                 <input type="text"/>
             </div>
-            <div className="header__center">
+            <div className="header__right">
+                    
+                 <div className="header__rightUser">
                     <p>Welcome</p>
                     <h4>
                         {user? user.displayName: 'Guest'}
                     </h4>
-                </div>
-            <div className="header__right">
-                {/*Conditional Sign Out If user exists */}
+           
+                </div>   
+                <div className="header__rightLogin">
+                  {/*Conditional Sign Out If user exists */}
                 {user ? (
-                    <Button className="loginButton" onClick={() => auth.signOut()}>Logout</Button>
+                    <Button className="logoutButton" onClick={() => auth.signOut()}>Logout</Button>
                 ) : (
                 <div className="app__loginContainer">
                     <Button onClick={() => setOpen(true)}>Sign Up</Button>
                     <Button onClick={() => setOpenSignIn(true)}>Sign In</Button>
                 </div>
                  )}
+                </div>    
+           
+                
                 
             </div>
         </div>

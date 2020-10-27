@@ -1,4 +1,4 @@
-import React, {useState, useEffect, forwardRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import './App.css';
 import { Button, FormHelperText, InputLabel, Input } from '@material-ui/core';
 import { FormControl, IconButton } from '@material-ui/core';
@@ -17,25 +17,48 @@ const[messages,setMessages] = useState([{
   message: 'Please enter a message',
 }]);
 const[username, setUsername] = useState('');
+const[isDeleting, setIsDeleting] = useState(false);
 
 useEffect(()=> {
-  //run once when the app loads
+  
+    //run once when the app loads
   db.collection('messages')
   .orderBy('timestamp', 'desc')
   .onSnapshot(snapshot => {
-    setMessages(snapshot.docs.map(doc=> ({id: doc.id, message: doc.data()})))
+    if(isDeleting === false){
+      setMessages(snapshot.docs.map(doc=> ({id: doc.id, message: doc.data()})))
+    }
   })
+  
+  
 },[])
 
 const sendMessage = (event) => {
   //DB Logic
   event.preventDefault();
   if(input === "CLR"){
+    setIsDeleting(true);
+
     setMessages([{
-      username:'Guest',
+      username: null,
+      message: 'Deleting Conversation...',
+    }])
+
+    messages.map(({message, id})=>(
+      db.collection("messages").doc(id).delete().catch(function(error) {
+        console.error("Error removing document: ", error);
+      })
+     ))
+
+     setIsDeleting(false);
+
+     db.collection('messages').add({
+      username:'Welcome',
       message: 'Please enter a message',
-    }]);
-    //CLEAR DATABASE
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    })
+
+
   }else {
     db.collection('messages').add({
       message: input,
@@ -58,21 +81,19 @@ const handleUsername = (user) => {
     <div className="app">
       <Header usernameHandler = {handleUsername}/>
       <h1>Main Chat</h1>
-      <p className="app__description">Enter "CLR" to clear the chat</p>
+      {/* <p className="app__description">Enter "CLR" to clear the chat</p> */}
         
-      <div className="app__messages">
+      <div className="app__core">
+        <div className="app__messages">
         <FlipMove>
           {messages.map(({message, id})=>(
             <Message key={id} username={username} message={message} />
            ))}
         </FlipMove>
         
-      </div>
-
-      
-      
-    <form onSubmit={sendMessage} className="app__form">
-    <FormControl className="app__formControl">
+        </div>
+        <form onSubmit={sendMessage} className="app__form">
+        <FormControl className="app__formControl">
         
 
           <Input className="app__input" type="text" placeholder="Enter a message..." value={input} onChange={event => setInput(event.target.value)} className="app__input"/>   
@@ -85,6 +106,12 @@ const handleUsername = (user) => {
 
       </FormControl>
     </form>
+      </div>  
+      
+
+      
+      
+    
       
     </div>
   );
